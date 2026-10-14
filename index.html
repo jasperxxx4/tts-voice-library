@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F5-TTS 参考音色库</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light dark}body{max-width:930px;margin:35px auto;padding:0 18px;line-height:1.6}h1{margin-bottom:0}small{opacity:.7}.voice{border:1px solid #9995;border-radius:12px;padding:14px;margin:12px 0}audio{display:block;width:100%;margin:10px 0}button{border:1px solid #9997;border-radius:8px;padding:7px 12px;cursor:pointer;background:transparent}input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #9997;border-radius:8px;background:transparent;margin:12px 0}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}code{overflow-wrap:anywhere}.note{color:#777}
+</style>
+</head><body>
+<h1>🎙️ F5-TTS 参考音色库</h1>
+<p>点击播放试听，选定后复制音频直链，用于 n8n / F5-TTS。</p>
+<input id="filter" placeholder="按文件名筛选声音…" aria-label="筛选声音">
+<div id="status">正在读取 GitHub 仓库中的音频…</div>
+<div id="list"></div>
+<p class="note"><small>音频来源：公开 GitHub 仓库 jasperxxx4/tts-voice-library。仅上传你有权公开使用的录音。</small></p>
+<script>
+const owner='jasperxxx4',repo='tts-voice-library';
+const list=document.getElementById('list'),status=document.getElementById('status'),filter=document.getElementById('filter');
+let files=[];
+function render(){list.replaceChildren();const found=files.filter(f=>f.name.toLowerCase().includes(filter.value.trim().toLowerCase()));status.textContent=`共 ${files.length} 个音频，显示 ${found.length} 个`;
+for(const f of found){const card=document.createElement('section');card.className='voice';const title=document.createElement('strong');title.textContent=f.name;card.append(title);
+const audio=document.createElement('audio');audio.controls=true;audio.preload='none';audio.src=f.download_url;card.append(audio);
+const row=document.createElement('div');row.className='row';const copy=document.createElement('button');copy.textContent='复制音频直链';copy.onclick=async()=>{try{await navigator.clipboard.writeText(f.download_url);copy.textContent='已复制';setTimeout(()=>copy.textContent='复制音频直链',1600)}catch{prompt('复制下面的直链',f.download_url)}};
+const link=document.createElement('a');link.textContent='查看文件';link.href=f.html_url;link.target='_blank';link.rel='noopener noreferrer';row.append(copy,link);card.append(row);list.append(card)}}
+filter.addEventListener('input',render);
+fetch(`https://api.github.com/repos/${owner}/${repo}/contents/`,{headers:{Accept:'application/vnd.github+json'}}).then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()}).then(data=>{files=data.filter(f=>f.type==='file'&&/\.(mp3|wav|ogg|m4a|flac)$/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name));render()}).catch(err=>{status.textContent='无法读取音频列表，请确认仓库已设为 Public、仓库名称正确，且已上传音频。错误：'+err.message});
+</script>
+</body></html>
